@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Hello, HTML!</h1>
+</body>
+</html><!DOCTYPE html>
+
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sayaç">
+<meta name="theme-color" content="#0a0a0f">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon.svg">
+<title>500 Tur Sayacı</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0f;--border:#1e1e2e;--accent:#c8a96e;--accent2:#7c6aa0;
+  --text:#e8e4dc;--muted:#5a5870;--surface:#13131a;--ring:#c8a96e33;
+  --st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px);
+  --sl:env(safe-area-inset-left,0px);--sr:env(safe-area-inset-right,0px);
+}
+html,body{width:100%;height:100%;background:var(--bg);color:var(--text);
+  font-family:'Courier New',Courier,monospace;overflow:hidden;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+  user-select:none;-webkit-user-select:none;}
+
+.mode-tabs{display:flex;gap:4px;background:var(–surface);border:1px solid var(–border);padding:4px;border-radius:4px;}
+.mode-tab{background:none;border:1px solid transparent;color:var(–muted);font-family:inherit;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;padding:8px 18px;cursor:pointer;border-radius:2px;transition:all 0.2s;}
+.mode-tab.active{border-color:var(–accent);color:var(–accent);background:#c8a96e0e;box-shadow:0 0 10px var(–ring);}
+
+.layout{position:relative;z-index:1;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+padding:calc(var(–st)+12px) calc(var(–sr)+16px) calc(var(–sb)+8px) calc(var(–sl)+16px);}
+
+@media(orientation:landscape)and(max-height:500px){
+.layout{flex-direction:row;justify-content:center;align-items:center;gap:0;padding:calc(var(–st)+6px) calc(var(–sr)+20px) calc(var(–sb)+6px) calc(var(–sl)+20px);}
+.col-left{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:0 0 auto;padding-right:24px;}
+.col-right{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;flex:0 0 auto;}
+.clock-wrap{width:min(44vh,190px)!important;height:min(44vh,190px)!important;}
+.time-display{font-size:clamp(22px,5.5vh,38px)!important;}
+.progress-strip{width:170px!important;}
+.dots-row{max-width:190px!important;max-height:28px!important;}
+.controls button{padding:8px 14px!important;}
+}
+@media(orientation:portrait),(orientation:landscape)and(min-height:501px){
+.col-left,.col-right{display:contents;}
+}
+
+.title{font-size:10px;letter-spacing:0.45em;text-transform:uppercase;color:var(–muted);}
+
+.clock-wrap{position:relative;width:min(54vw,54vh,230px);height:min(54vw,54vh,230px);flex-shrink:0;}
+.clock-ring{position:absolute;inset:0;border-radius:50%;border:1px solid var(–border);}
+.clock-ring-outer{inset:-12px;border-color:#14141d;}
+svg.arc{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);}
+.arc-bg{fill:none;stroke:var(–border);stroke-width:3;}
+.arc-fill{fill:none;stroke:var(–accent);stroke-width:3.5;stroke-linecap:round;filter:drop-shadow(0 0 5px #c8a96e88);transition:stroke-dashoffset 0.75s linear;}
+.clock-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;}
+.time-display{font-size:clamp(30px,11vw,50px);font-weight:300;letter-spacing:0.04em;color:var(–text);font-variant-numeric:tabular-nums;line-height:1;}
+.time-display.flash{animation:flash 0.4s ease;}
+@keyframes flash{0%,100%{color:var(–text);}50%{color:var(–accent);text-shadow:0 0 28px var(–accent);}}
+.round-label{font-size:9px;letter-spacing:0.25em;color:var(–muted);text-transform:uppercase;}
+.mode-indicator{font-size:8px;letter-spacing:0.2em;color:var(–accent2);text-transform:uppercase;opacity:0.8;}
+
+.round-display{display:flex;align-items:baseline;gap:6px;}
+.round-current{font-size:clamp(26px,8vw,38px);font-weight:500;color:var(–accent);font-variant-numeric:tabular-nums;}
+.round-sep{font-size:16px;color:var(–muted);}
+.round-total{font-size:18px;color:var(–muted);font-variant-numeric:tabular-nums;cursor:pointer;border-bottom:1px dashed var(–muted);transition:color 0.2s,border-color 0.2s;}
+.round-edit-wrap{display:none;align-items:center;gap:6px;}
+.round-edit-wrap.visible{display:flex;}
+input.round-input{background:var(–surface);border:1px solid var(–accent);color:var(–accent);font-family:inherit;font-size:18px;font-variant-numeric:tabular-nums;width:70px;text-align:center;padding:5px 6px;border-radius:2px;outline:none;}
+.round-edit-wrap button{padding:5px 12px;font-size:10px;}
+.round-hint{font-size:8px;letter-spacing:0.18em;color:var(–muted);opacity:0.5;margin-top:-4px;}
+
+.progress-strip{width:min(72vw,290px);height:3px;background:var(–border);border-radius:2px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(–accent2),var(–accent));border-radius:2px;transition:width 0.6s ease;box-shadow:0 0 8px var(–accent);}
+
+.dots-row{display:flex;gap:3px;flex-wrap:wrap;justify-content:center;max-width:min(76vw,310px);max-height:38px;overflow:hidden;}
+.dot{width:4px;height:4px;border-radius:50%;background:var(–border);transition:background 0.25s;}
+.dot.done{background:var(–accent2);}
+.dot.current{background:var(–accent);box-shadow:0 0 4px var(–accent);}
+
+.completed-msg{font-size:10px;letter-spacing:0.3em;color:var(–accent);text-transform:uppercase;opacity:0;transition:opacity 0.6s;height:14px;}
+.completed-msg.show{opacity:1;}
+
+.controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+button{background:none;border:1px solid var(–border);color:var(–text);font-family:inherit;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;padding:11px 20px;cursor:pointer;border-radius:2px;transition:all 0.18s;-webkit-tap-highlight-color:transparent;}
+button:active{border-color:var(–accent);color:var(–accent);box-shadow:0 0 12px var(–ring);}
+button.primary{border-color:var(–accent);color:var(–accent);background:#c8a96e0c;}
+button:disabled{opacity:0.25;cursor:not-allowed;pointer-events:none;}
+.btn-test{font-size:9px;padding:6px 14px;opacity:0.4;margin-top:-2px;}
+
+.wake-badge{position:fixed;top:calc(var(–st)+8px);right:calc(var(–sr)+12px);font-size:7px;letter-spacing:0.14em;color:var(–accent);opacity:0;transition:opacity 0.5s;z-index:10;}
+.wake-badge.on{opacity:0.55;}
+
+.clock-wrap.ring{animation:ringShake 0.5s ease;}
+@keyframes ringShake{0%,100%{transform:translateX(0);}15%{transform:translateX(-5px) rotate(-2deg);}35%{transform:translateX(5px) rotate(2deg);}55%{transform:translateX(-3px);}75%{transform:translateX(3px);}90%{transform:translateX(-2px);}}
+
+#installBanner{display:none;position:fixed;bottom:calc(var(–sb)+12px);left:50%;transform:translateX(-50%);
+background:var(–surface);border:1px solid var(–accent);color:var(–accent);
+font-family:inherit;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;
+padding:10px 18px;border-radius:2px;cursor:pointer;z-index:20;white-space:nowrap;
+box-shadow:0 0 18px var(–ring);}
+</style>
+
+</head>
+<body>
+
+<div class="wake-badge" id="wakeBadge">● EKRAN AKTİF</div>
+<button id="installBanner">⬇ Ana Ekrana Ekle</button>
+
+<div class="layout">
+  <div class="col-left">
+    <div class="title">500 Tur Sayacı</div>
+    <div class="mode-tabs">
+      <button class="mode-tab active" id="tab60" onclick="setMode(60)">1 Dakika</button>
+      <button class="mode-tab" id="tab90" onclick="setMode(90)">1,5 Dakika</button>
+    </div>
+    <div class="clock-wrap" id="clockWrap">
+      <div class="clock-ring clock-ring-outer"></div>
+      <div class="clock-ring"></div>
+      <svg class="arc" viewBox="0 0 240 240">
+        <circle class="arc-bg" cx="120" cy="120" r="108"/>
+        <circle class="arc-fill" id="arcFill" cx="120" cy="120" r="108"/>
+      </svg>
+      <div class="clock-center">
+        <div class="mode-indicator" id="modeIndicator">1:30 / tur</div>
+        <div class="time-display" id="timeDisplay">01:30</div>
+        <div class="round-label">kalan süre</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-right">
+    <div class="round-display" id="roundDisplayNormal">
+      <span class="round-current" id="roundCurrent">1</span>
+      <span class="round-sep">/</span>
+      <span class="round-total" id="roundTotal">500</span>
+    </div>
+    <div class="round-edit-wrap" id="roundEditWrap">
+      <input class="round-input" id="roundInput" type="number" min="1" max="9999" value="500"/>
+      <button id="btnRoundOk">✓</button>
+      <button id="btnRoundCancel">✕</button>
+    </div>
+    <div class="round-hint">tur sayısına tıkla → değiştir</div>
+    <div class="progress-strip"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="dots-row" id="dotsRow"></div>
+    <div class="completed-msg" id="completedMsg">✦ Tüm turlar tamamlandı ✦</div>
+    <div class="controls">
+      <button class="primary" id="btnStart">Başlat</button>
+      <button id="btnPause" disabled>Duraklat</button>
+      <button id="btnReset">Sıfırla</button>
+    </div>
+    <button class="btn-test" id="btnTest">🔔 Ses Testi</button>
+  </div>
+</div>
+
+<script>
+const CIRC = 2 * Math.PI * 108;
+let TOTAL = 500, SECS = 90;
+let round = 1, left = SECS;
+let running = false, timer = null, wl = null;
+
+const $ = id => document.getElementById(id);
+const td=$('timeDisplay'),rc=$('roundCurrent'),rt=$('roundTotal');
+const rdn=$('roundDisplayNormal'),rew=$('roundEditWrap'),ri=$('roundInput');
+const pf=$('progressFill'),af=$('arcFill'),cw=$('clockWrap');
+const dr=$('dotsRow'),cm=$('completedMsg');
+const bs=$('btnStart'),bp=$('btnPause'),br=$('btnReset');
+const mi=$('modeIndicator'),wb=$('wakeBadge');
+
+af.style.strokeDasharray = CIRC;
+af.style.strokeDashoffset = 0;
+
+// 100 nokta oluştur
+for(let i=0;i<100;i++){const d=document.createElement('div');d.className='dot';d.id='d'+i;dr.appendChild(d);}
+
+function dots(){for(let i=0;i<100;i++){const e=$('d'+i);if(!e)return;e.className='dot';if(i+1<round)e.classList.add('done');else if(i+1===round)e.classList.add('current');}}
+function fmt(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
+function ui(){td.textContent=fmt(left);rc.textContent=round;rt.textContent=TOTAL;ri.value=TOTAL;af.style.strokeDashoffset=CIRC*(left/SECS);pf.style.width=((round-1)/TOTAL*100)+'%';dots();}
+
+function setMode(s){
+  if(running)return;
+  SECS=s;round=1;left=s;
+  cm.classList.remove('show');
+  bs.disabled=false;bs.textContent='Başlat';bp.disabled=true;
+  $('tab60').classList.toggle('active',s===60);
+  $('tab90').classList.toggle('active',s===90);
+  mi.textContent=s===60?'1:00 / tur':'1:30 / tur';
+  ui();
+}
+
+// Tur sayısı düzenleme
+rt.addEventListener('click',()=>{if(running)return;rdn.style.display='none';rew.classList.add('visible');setTimeout(()=>{ri.focus();ri.select();},60);});
+function applyEdit(){const v=parseInt(ri.value);if(!isNaN(v)&&v>=1&&v<=9999){TOTAL=v;if(round>TOTAL){round=1;left=SECS;}}rew.classList.remove('visible');rdn.style.display='flex';ui();}
+$('btnRoundOk').addEventListener('click',applyEdit);
+$('btnRoundCancel').addEventListener('click',()=>{rew.classList.remove('visible');rdn.style.display='flex';});
+ri.addEventListener('keydown',e=>{if(e.key==='Enter')applyEdit();if(e.key==='Escape')$('btnRoundCancel').click();});
+
+// Ses
+let ac=null;
+function unlock(){if(ac){if(ac.state==='suspended')ac.resume();return;}ac=new(window.AudioContext||window.webkitAudioContext)();const b=ac.createBuffer(1,1,22050),s=ac.createBufferSource();s.buffer=b;s.connect(ac.destination);s.start(0);if(ac.state==='suspended')ac.resume();}
+function bell(){
+  if(!ac)return;if(ac.state==='suspended')ac.resume();
+  const now=ac.currentTime,comp=ac.createDynamicsCompressor(),m=ac.createGain();
+  comp.threshold.value=-6;comp.knee.value=6;comp.ratio.value=4;comp.attack.value=0.001;comp.release.value=0.3;
+  m.gain.setValueAtTime(1.5,now);m.connect(comp);comp.connect(ac.destination);
+  [[80,1.0,1.7],[160,0.85,1.5],[240,0.6,1.3],[320,0.45,1.1],[480,0.28,0.9],[640,0.16,0.7],[960,0.08,0.5]].forEach(([f,a,d])=>{const o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(m);o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(0,now);g.gain.linearRampToValueAtTime(a,now+0.005);g.gain.exponentialRampToValueAtTime(0.0001,now+d);o.start(now);o.stop(now+d+0.05);});
+  const sz=ac.sampleRate*0.07,nb=ac.createBuffer(1,sz,ac.sampleRate),nd=nb.getChannelData(0);for(let i=0;i<sz;i++)nd[i]=Math.random()*2-1;
+  const ns=ac.createBufferSource(),nf=ac.createBiquadFilter(),ng=ac.createGain();nf.type='bandpass';nf.frequency.value=380;nf.Q.value=0.7;ng.gain.setValueAtTime(1.0,now);ng.gain.exponentialRampToValueAtTime(0.0001,now+0.07);ns.connect(nf);nf.connect(ng);ng.connect(m);ns.buffer=nb;ns.start(now);ns.stop(now+0.08);
+  cw.classList.remove('ring');void cw.offsetWidth;cw.classList.add('ring');cw.addEventListener('animationend',()=>cw.classList.remove('ring'),{once:true});
+  td.classList.remove('flash');void td.offsetWidth;td.classList.add('flash');td.addEventListener('animationend',()=>td.classList.remove('flash'),{once:true});
+}
+
+// Wake Lock
+async function lockOn(){if(!('wakeLock'in navigator))return;try{wl=await navigator.wakeLock.request('screen');wb.classList.add('on');wl.addEventListener('release',()=>{wb.classList.remove('on');wl=null;});}catch(e){}}
+async function lockOff(){if(wl){try{await wl.release();}catch(e){}wl=null;}wb.classList.remove('on');}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&running)lockOn();});
+
+function tick(){
+  if(left>0){left--;ui();}
+  else{
+    bell();
+    if(round>=TOTAL){clearInterval(timer);running=false;bs.disabled=true;bp.disabled=true;cm.classList.add('show');pf.style.width='100%';lockOff();return;}
+    round++;left=SECS;ui();
+  }
+}
+
+bs.addEventListener('click',async()=>{if(running)return;unlock();running=true;timer=setInterval(tick,1000);bs.disabled=true;bp.disabled=false;await lockOn();});
+bp.addEventListener('click',async()=>{if(!running)return;clearInterval(timer);running=false;bs.disabled=false;bs.textContent='Devam Et';bp.disabled=true;await lockOff();});
+br.addEventListener('click',async()=>{clearInterval(timer);running=false;round=1;left=SECS;bs.disabled=false;bs.textContent='Başlat';bp.disabled=true;cm.classList.remove('show');ui();await lockOff();});
+$('btnTest').addEventListener('click',()=>{unlock();setTimeout(bell,50);});
+
+// PWA Kurulum
+let dp=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;$('installBanner').style.display='block';});
+$('installBanner').addEventListener('click',async()=>{if(!dp)return;dp.prompt();const r=await dp.userChoice;if(r.outcome==='accepted')$('installBanner').style.display='none';dp=null;});
+window.addEventListener('appinstalled',()=>{$('installBanner').style.display='none';});
+
+// Service Worker kaydı — KALICI CACHE İÇİN KRİTİK
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js',{scope:'./'})
+    .then(reg=>{
+      console.log('SW kayıtlı');
+      // Her sayfa açılışında cache'i güncelle
+      reg.update();
+    })
+    .catch(e=>console.warn('SW hatası:',e));
+}
+
+ui();
+</script>
+
+</body>
+</html>
